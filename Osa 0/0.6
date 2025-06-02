@@ -1,0 +1,9 @@
+sequenceDiagram
+    participant browser
+    participant server
+    
+    browser->>server: POST https://studies.cs.helsinki.fi/exampleapp/new_note_spa
+    activate server
+    server-->>browser: Status code 201 and the new note to be added to the list
+    deactivate server
+    The browser then adds the note it received to the list

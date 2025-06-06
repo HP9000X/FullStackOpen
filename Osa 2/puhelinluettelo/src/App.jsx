@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import axios from 'axios'
+import personService from './services/persons'
 
 const Filter = ({ newFilter, handleFilterInput }) => {
   return (
@@ -25,11 +25,16 @@ const PersonsForm = ({addPerson, newName, handleNameInput, newNumber, handleNumb
   )
 }
 
-const Persons = ({filteredPersons}) => {
+const Persons = ({filteredPersons, deletePerson}) => {
   return (
     <>
       {filteredPersons.map((person) => 
-          <p key={person.name}>{person.name} {person.number ? person.number : ""} </p>
+          <p key={person.name}>
+            {person.name}{' '}
+            {person.number ? person.number : ""}{' '}
+            <button 
+              onClick={() => deletePerson(person)}>delete</button>
+          </p>
         )}
     </>
   )
@@ -41,11 +46,12 @@ const App = () => {
   const [newNumber, setNewNumber] = useState('')
   const [newFilter, setFilter] = useState('')
 
-  useEffect(() => {
-  axios
-    .get("http://localhost:3001/persons")
-    .then((response => setPersons(response.data)))
-  }, [])
+  useEffect(() => { 
+    personService
+      .getAll()
+        .then(data => {
+          setPersons(data)})}
+  , [])
 
   const handleNameInput = (event) => {
     setNewName(event.target.value)
@@ -62,17 +68,59 @@ const App = () => {
   const addPerson = (event) => {
     event.preventDefault()
     if (!(persons.some(person => person.name === newName))) {
-      const copy = [...persons, { name: newName, number: newNumber}]
-      setPersons(copy)
-      setNewName("")
-      setNewNumber("")
+      const personObject = {
+        name: newName,
+        number: newNumber
+      }
+      personService
+        .create(personObject)
+          .then((returnedPerson) => {
+          setPersons(persons.concat(returnedPerson))
+          setNewName('')
+          setNewNumber('')
+      })
     } else {
-      alert(`${newName} is already added to phonebook`)
+      if (window.confirm(`${newName} is already added to phonebook, replace the old number with a new one?`)) 
+      {
+        updateNumber()
+      }
+    }
+  }
+
+  const updateNumber = () => {
+    const targetPerson = persons.find(p => p.name === newName)
+        const changedPerson = {...targetPerson, number: newNumber}
+        personService
+          .update(targetPerson.id, changedPerson)
+            .then(returnedPerson => {
+            setPersons(persons.map(p => {
+              return (p.id !== targetPerson.id ? p : returnedPerson)
+              }))
+            })
+            .catch(error => {
+              alert(`the person '${targetPerson.name}' was already deleted from server`)
+              setPersons(persons.filter(p => p.id !== targetPerson.id))
+    })
+  }
+
+  const deletePerson = (person) => {
+    if (window.confirm(`Delete ${person.name}?`)) {
+      personService
+      .remove(person.id).then(() => {
+        personService.getAll().then(data => {
+          setPersons(data)
+        })
+      })
+      .catch(() => {
+        alert(
+          `the person '${person.name}' was already deleted from server`
+        )
+      })
     }
   }
 
   const filteredPersons = persons.filter(
-    person => person.name.toLowerCase().includes(newFilter.toLowerCase())
+    person => person.name?.toLowerCase().includes(newFilter.toLowerCase())
   )
   
 
@@ -89,7 +137,8 @@ const App = () => {
 
         </PersonsForm>
       <h3>Numbers</h3>
-        <Persons filteredPersons={filteredPersons}></Persons>
+        <Persons filteredPersons={filteredPersons}
+        deletePerson={deletePerson}></Persons>
     </div>
   )
 

@@ -1,11 +1,11 @@
 require('dotenv').config()
-const express = require("express")
-const morgan = require("morgan")
+const express = require('express')
+const morgan = require('morgan')
 const app = express()
 const Person = require('./models/person')
 
-morgan.token('body', function (req, res) { 
-    return JSON.stringify(req.body)
+morgan.token('body', function (req) {
+  return JSON.stringify(req.body)
 })
 
 app.use(express.static('dist'))
@@ -23,94 +23,93 @@ app.use(morgan(function (tokens, req, res) {
 
 
 app.get('/api/persons', (req, res) => {
-    Person.find({}).then(persons => {
-        res.json(persons)
-    })
-}) 
+  Person.find({}).then(persons => {
+    res.json(persons)
+  })
+})
 
 app.get('/info', (req, res) => {
-    Person.countDocuments({}).then(person_count =>{
-        const date = new Date()
-        res.send(`
-            <body>
-                <p>Phonebook has info for ${person_count} people</p>
-                <time>${date}</time>
-            </body>
-        `)
-    })
-    
+  Person.countDocuments({}).then(person_count => {
+    const date = new Date()
+    res.send(`
+      <body>
+        <p>Phonebook has info for ${person_count} people</p>
+          <time>${date}</time>
+        </body>
+    `)
+  })
 })
 
 app.get('/api/persons/:id', (req, res, next) => {
-    Person.findById(req.params.id)
-        .then(person => {
-            if (person) {
-                res.json(person)
-            } else {
-                res.status(404).end()
-            }
-        })
-        .catch((error) => next(error))
+  Person.findById(req.params.id)
+    .then(person => {
+      if (person) {
+        res.json(person)
+      } else {
+        res.status(404).end()
+      }
+    })
+    .catch((error) => next(error))
 })
 
-app.delete('/api/persons/:id', (req, res, next) => {
-    Person.findByIdAndDelete(req.params.id).then(result => {
-        res.status(204).end()
-    })
+app.delete('/api/persons/:id', (req, res) => {
+  Person.findByIdAndDelete(req.params.id).then(() => {
+    res.status(204).end()
+  })
 })
 
 app.post('/api/persons', (req, res, next) => {
-    const body = req.body
+  const body = req.body
 
-    if (!body.name) {
-        return res.status(400).json({
-            error: 'name missing'
-        })
-    }
-    
-    if (!body.number) {
-        return res.status(400).json({
-            error: 'number missing'
-        })
-    }
-
-    const count = Person.countDocuments({ name: body.name })
-
-    if (count > 0) {
-        return res.status(400).json({
-            error: 'name must be unique'
-        })
-    }
-
-    const person = new Person({
-        name: body.name,
-        number: body.number,
+  if (!body.name) {
+    return res.status(400).json({
+      error: 'name missing'
     })
+  }
 
-
-    person.save().then(savedPerson => {
-        res.json(savedPerson)
+  if (!body.number) {
+    return res.status(400).json({
+      error: 'number missing'
     })
+  }
+
+  const count = Person.countDocuments({ name: body.name })
+
+  if (count > 0) {
+    return res.status(400).json({
+      error: 'name must be unique'
+    })
+  }
+
+  const person = new Person({
+    name: body.name,
+    number: body.number,
+  })
+
+
+  person.save().then(savedPerson => {
+    res.json(savedPerson)
+  })
     .catch(error => {
-        next(error)
+      next(error)
     })
 })
 
 app.put('/api/persons/:id', (req, res, next) => {
-    const { name, number } = req.body
-    Person.findById(req.params.id)
-        .then(person => {
-            if (!person) {
-                return res.status(404).end()
-            }
+  const { number } = req.body
+  Person.findById(req.params.id)
+    .then(person => {
+      if (!person) {
+        return res.status(404).end()
+      }
 
-            person.number = number
+      person.number = number
 
-            return person.save().then((updatedPerson) => {
-                res.json(updatedPerson)
-            })
-        })
-        .catch(error => next(error))
+      return person.save().then((updatedPerson) => {
+        res.json(updatedPerson)
+      })
+    })
+    .catch(error => next(error))
 })
 
 const unknownEndpoint = (request, response) => {

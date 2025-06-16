@@ -1,9 +1,10 @@
 const express = require('express')
+require('express-async-errors')
 const mongoose = require('mongoose')
 const config = require('./utils/config.js')
 const logger = require('./utils/logger.js')
 const middleware = require('./utils/middleware.js')
-const notesRouter = require('./controllers/blogs.js')
+const blogsRouter = require('./controllers/blogs.js')
 
 const app = express()
 
@@ -22,7 +23,7 @@ app.use(express.static('dist'))
 app.use(express.json())
 app.use(middleware.requestLogger)
 
-app.use('/api/blogs', notesRouter)
+app.use('/api/blogs', blogsRouter)
 
 app.use(middleware.unknownEndpoint)
 app.use(middleware.errorHandler)

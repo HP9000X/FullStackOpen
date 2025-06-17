@@ -5,5 +5,6 @@ Content-Type: application/json
   "title": "Cool title",
   "author": "Pasi Jääskeläinen",
   "url": "verycoolwebsite.com",
-  "likes": 500
+  "likes": 500,
+  "userId": "685134798a26c7c627aeb89d"
 }

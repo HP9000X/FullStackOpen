@@ -11,7 +11,22 @@ const api = supertest(app)
 
 beforeEach(async () => {
   await User.deleteMany({})
-  await User.insertMany(helper.initialUsers)
+
+  const users = helper.initialUsers
+
+  let latestCreatedUser
+
+  for (const user of users) {
+    const passwordHash = await bcrypt.hash(user.password, 10)
+    const newUser = new User({
+      username: user.username,
+      name: user.name,
+      passwordHash,
+    })
+
+    latestCreatedUser = await newUser.save()
+  }
+
   await Blog.deleteMany({})
   await Blog.insertMany(helper.initialBlogs)
 })

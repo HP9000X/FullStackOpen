@@ -1,0 +1,11 @@
+POST http://localhost:3001/api/blogs
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6Ik9saXZlcjEyMyIsImlkIjoiNjg1MTQ2ZDJhYmRjZmJhYWNhZTQ3ZDQ1IiwiaWF0IjoxNzUwMjM0Mzc4fQ.HgJnZNo_pG7jRv2i4SJCQXCjVpsocEDv5pJ_NGsQz1o
+
+{
+  "title": "Lumikko ja yhdeksän muuta",
+  "author": "Pasi Jääskeläinen",
+  "url": "verycoolwebsite.com",
+  "likes": 500,
+  "userId": "685146d2abdcfbaacae47d45"
+}

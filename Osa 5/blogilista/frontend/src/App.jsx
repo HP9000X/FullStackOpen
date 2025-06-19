@@ -1,10 +1,11 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 
 import Blog from './components/Blog'
 import LoginForm from './components/LoginForm'
-import NewBlogForm from './components/NewBlogForm'
+import BlogForm from './components/BlogForm'
 import Notification from './components/Notification'
 import ErrorNotification from './components/ErrorNotification'
+import Togglable from './components/Togglable'
 
 import blogService from './services/blogs'
 import loginService from './services/login'
@@ -15,16 +16,14 @@ const App = () => {
   const [password, setPassword] = useState('')
   const [user, setUser] = useState(null)
 
-  const [title, setTitle] = useState('')
-  const [author, setAuthor] = useState('')
-  const [url, setUrl] = useState('')
-
   const [errorMessage, setErrorMessage] = useState(null)
   const [message, setMessage] = useState(null)
 
+  const blogFormRef = useRef()
+
   useEffect(() => {
     blogService.getAll().then((blogs) => setBlogs(blogs))
-  }, [])
+  }, [user])
 
   useEffect(() => {
     const loggedUserJSON = window.localStorage.getItem('loggedBlogappUser')
@@ -70,20 +69,16 @@ const App = () => {
     setUser(null)
   }
 
-  const handleNewBlog = async (event) => {
-    event.preventDefault()
+  const createBlog = async (blogObject) => {
+    blogFormRef.current.toggleVisibility()
 
     try {
-      const blog = await blogService.create({
-        title,
-        author,
-        url,
-      })
+      await blogService.create(blogObject)
 
       const updatedBlogs = await blogService.getAll()
       setBlogs(updatedBlogs)
 
-      setMessage(`a new blog ${title} by ${author} added`)
+      setMessage(`a new blog ${blogObject.title} by ${blogObject.author} added`)
       setTimeout(() => {
         setMessage(null)
       }, 5000)
@@ -93,10 +88,11 @@ const App = () => {
         setErrorMessage(null)
       }, 5000)
     }
+  }
 
-    setTitle('')
-    setAuthor('')
-    setUrl('')
+  const updateBlogsList = async () => {
+    const updatedBlogs = await blogService.getAll()
+    setBlogs(updatedBlogs)
   }
 
   if (user === null) {
@@ -124,18 +120,14 @@ const App = () => {
         {user.username} logged in
         <button onClick={handleLogOut}>logout</button>
       </div>
-      <NewBlogForm
-        title={title}
-        author={author}
-        url={url}
-        setTitle={setTitle}
-        setAuthor={setAuthor}
-        setUrl={setUrl}
-        handleNewBlog={handleNewBlog}
-      ></NewBlogForm>
-      {blogs.map((blog) => (
-        <Blog key={blog.id} blog={blog} />
-      ))}
+      <Togglable buttonLabel="new blog" ref={blogFormRef}>
+        <BlogForm blogFormRef={blogFormRef} createBlog={createBlog}></BlogForm>
+      </Togglable>
+      {blogs
+        .sort((a, b) => b.likes - a.likes)
+        .map((blog) => (
+          <Blog key={blog.id} blog={blog} updateBlogsList={updateBlogsList} />
+        ))}
     </div>
   )
 }
